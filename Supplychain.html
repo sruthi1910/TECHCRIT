@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two Packages. One Week. The AI Supply Chain Almost Came Apart.</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:       #0d0d0f;
+  --paper:     #f9f6f0;
+  --red:       #bf2c2c;
+  --red-dim:   #8c1f1f;
+  --amber:     #c47d0a;
+  --green:     #1a6b3a;
+  --rule:      #ddd8ce;
+  --muted:     #6b6560;
+  --code-bg:   #13131a;
+  --code-green:#6dffb3;
+  --code-blue: #7eb8f7;
+  --code-yel:  #ffd97d;
+  --code-dim:  #4a4a5a;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Lora', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.8;
+  overflow-x: hidden;
+}
+
+/* ── PROGRESS BAR ── */
+#progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: var(--red);
+  width: 0%;
+  z-index: 9999;
+  transition: width 0.1s linear;
+}
+
+/* ── TICKER ── */
+.ticker-wrap {
+  background: var(--ink);
+  overflow: hidden;
+  padding: 9px 0;
+  border-bottom: 2px solid var(--red-dim);
+}
+.ticker-inner {
+  display: flex;
+  animation: ticker 35s linear infinite;
+  white-space: nowrap;
+}
+.ticker-item {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(249,246,240,0.55);
+  padding: 0 36px;
+  flex-shrink: 0;
+}
+.ticker-item strong { color: var(--red); font-weight: 600; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ── MASTHEAD ── */
+.masthead {
+  background: var(--ink);
+  position: relative;
+  overflow: hidden;
+  padding: 72px 0 64px;
+}
+.masthead::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 40%;
+  background: repeating-linear-gradient(
+    -60deg,
+    transparent, transparent 18px,
+    rgba(191,44,44,0.07) 18px, rgba(191,44,44,0.07) 19px
+  );
+  pointer-events: none;
+}
+.masthead-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 48px;
+  position: relative;
+  z-index: 1;
+}
+.masthead-kicker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--red);
+  border: 1px solid rgba(191,44,44,0.4);
+  display: inline-block;
+  padding: 5px 14px;
+  margin-bottom: 32px;
+}
+.masthead h1 {
+  font-family: 'Lora', serif;
+  font-size: clamp(32px, 4.8vw, 58px);
+  font-weight: 700;
+  line-height: 1.12;
+  color: var(--paper);
+  max-width: 780px;
+}
+.masthead h1 em {
+  font-style: italic;
+  color: rgba(249,246,240,0.55);
+}
+.masthead-deck {
+  margin-top: 24px;
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 18px;
+  color: rgba(249,246,240,0.6);
+  line-height: 1.65;
+  max-width: 620px;
+}
+.masthead-byline {
+  margin-top: 40px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.byline-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--red-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  color: var(--paper);
+  flex-shrink: 0;
+}
+.byline-text {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  color: rgba(249,246,240,0.45);
+  letter-spacing: 0.06em;
+}
+.byline-text strong { color: rgba(249,246,240,0.75); font-weight: 600; }
+
+/* ── NAV PILLS ── */
+.nav-pills {
+  background: #fff;
+  border-bottom: 1px solid var(--rule);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 0 48px;
+}
+.nav-pills-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-pills-inner::-webkit-scrollbar { display: none; }
+.nav-pill {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 14px 20px;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+.nav-pill:hover, .nav-pill.active { color: var(--red); border-bottom-color: var(--red); }
+
+/* ── MAIN LAYOUT ── */
+.main { max-width: 900px; margin: 0 auto; padding: 0 48px; }
+
+/* ── SECTION BREAK ── */
+.section-break {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 72px 0 48px;
+}
+.section-break::before, .section-break::after {
+  content: ''; flex: 1; height: 1px; background: var(--rule);
+}
+.section-break-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #bbb;
+  white-space: nowrap;
+}
+
+/* ── ARTICLE HEADER ── */
+.article-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.eyebrow-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 2px;
+  font-weight: 600;
+}
+.tag-critical { background: var(--red); color: #fff; }
+.tag-pypi { background: var(--ink); color: var(--paper); }
+.tag-npm { background: var(--amber); color: #fff; }
+.tag-dprk { background: #1a1a2e; color: #a8b4ff; }
+
+.article-title {
+  font-family: 'Lora', serif;
+  font-size: clamp(26px, 3.8vw, 44px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+.article-lede {
+  font-size: 19px;
+  font-style: italic;
+  color: var(--muted);
+  line-height: 1.65;
+  border-left: 3px solid var(--red);
+  padding-left: 20px;
+  margin-bottom: 40px;
+  max-width: 680px;
+}
+
+/* ── NARRATIVE SECTION ── */
+.narrative {
+  background: rgba(191,44,44,0.04);
+  border: 1px solid rgba(191,44,44,0.15);
+  border-radius: 4px;
+  padding: 28px 32px;
+  margin: 36px 0;
+  position: relative;
+}
+.narrative::before {
+  content: 'HOW I FOUND THIS';
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--red);
+  position: absolute;
+  top: -10px;
+  left: 24px;
+  background: var(--paper);
+  padding: 0 10px;
+}
+.narrative p {
+  font-size: 16px;
+  line-height: 1.75;
+  color: #3a3530;
+  margin-bottom: 0;
+}
+.narrative p + p { margin-top: 12px; }
+
+/* ── BODY PROSE ── */
+.prose p {
+  font-size: 17.5px;
+  line-height: 1.85;
+  color: #1c1b18;
+  margin-bottom: 1.5em;
+}
+.prose p:first-of-type::first-letter {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 72px;
+  line-height: 0.78;
+  float: left;
+  margin-right: 8px;
+  margin-top: 8px;
+  color: var(--red);
+}
+
+.prose h2 {
+  font-family: 'Lora', serif;
+  font-size: 26px;
+  font-weight: 700;
+  margin: 2.6em 0 0.8em;
+  color: var(--ink);
+  position: relative;
+  padding-bottom: 12px;
+}
+.prose h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 40px; height: 2px;
+  background: var(--red);
+}
+
+.prose h3 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin: 2em 0 0.7em;
+  color: var(--red-dim);
+  font-weight: 600;
+}
+
+/* ── HANDS ON BADGE ── */
+.hands-on {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 20px 26px;
+  margin: 32px 0;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.hands-on-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.hands-on-body { flex: 1; }
+.hands-on-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 6px;
+}
+.hands-on-body p {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: rgba(249,246,240,0.75);
+  margin: 0;
+}
+
+/* ── CALLOUTS ── */
+.callout {
+  padding: 22px 26px;
+  margin: 30px 0;
+  border-radius: 2px;
+}
+.callout-alert { background: #fff5f5; border-left: 4px solid var(--red); }
+.callout-info  { background: #f0f7f4; border-left: 4px solid var(--green); }
+.callout-warn  { background: #fffbf0; border-left: 4px solid var(--amber); }
+
+.callout-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.callout-alert .callout-label { color: var(--red-dim); }
+.callout-info  .callout-label { color: var(--green); }
+.callout-warn  .callout-label { color: #a0610a; }
+
+.callout p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #2a2a2a;
+  margin: 0;
+}
+.callout p + p { margin-top: 8px; }
+
+.callout ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+.callout ul li {
+  font-size: 14.5px;
+  color: #333;
+  padding: 3px 0 3px 20px;
+  position: relative;
+  line-height: 1.6;
+}
+.callout ul li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  top: 5px;
+  font-size: 9px;
+  opacity: 0.5;
+}
+
+/* ── PULL QUOTE ── */
+.pull-quote {
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+  padding: 28px 0 22px;
+  margin: 42px 0;
+}
+.pull-quote p {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 21px;
+  line-height: 1.5;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.pull-quote cite {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  font-style: normal;
+}
+
+/* ── TIMELINE ── */
+.timeline {
+  margin: 32px 0;
+  padding-left: 28px;
+  position: relative;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 6px; top: 8px; bottom: 8px;
+  width: 1px;
+  background: var(--rule);
+}
+.tl-item {
+  position: relative;
+  margin-bottom: 22px;
+}
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -26px; top: 7px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--red);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--red);
+}
+.tl-time {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--red);
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+}
+.tl-text {
+  font-size: 15px;
+  color: #333;
+  line-height: 1.65;
+}
+
+/* ── ATTACK CHAIN ── */
+.chain-wrap {
+  margin: 32px 0;
+  overflow-x: auto;
+}
+.chain {
+  display: flex;
+  min-width: 600px;
+  border: 1px solid var(--rule);
+  background: #fff;
+}
+.chain-step {
+  flex: 1;
+  padding: 18px 14px;
+  text-align: center;
+  border-right: 1px solid var(--rule);
+  position: relative;
+}
+.chain-step:last-child { border-right: none; background: #fff0f0; }
+.chain-n {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: #bbb;
+  margin-bottom: 6px;
+  letter-spacing: 0.1em;
+}
+.chain-icon { font-size: 20px; margin-bottom: 6px; }
+.chain-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #555;
+  line-height: 1.45;
+}
+.chain-step::after {
+  content: '→';
+  position: absolute;
+  right: -11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: var(--rule);
+  z-index: 1;
+  background: #fff;
+}
+.chain-step:last-child::after { display: none; }
+
+/* ── STATS ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--rule);
+  margin: 32px 0;
+  border: 1px solid var(--rule);
+}
+.stat {
+  background: var(--paper);
+  padding: 24px 18px;
+  text-align: center;
+}
+.stat-n {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 46px;
+  line-height: 1;
+  color: var(--red);
+  display: block;
+}
+.stat-l {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 5px;
+  display: block;
+}
+
+/* ── IOC TABLE ── */
+.ioc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 26px 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12.5px;
+}
+.ioc-table th {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.ioc-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.ioc-table tr:nth-child(even) td { background: rgba(0,0,0,0.018); }
+.ioc-val { color: var(--red-dim); word-break: break-all; }
+.ioc-type { color: var(--muted); white-space: nowrap; }
+
+/* ── CODE ── */
+.code-block {
+  background: var(--code-bg);
+  border-radius: 4px;
+  margin: 28px 0;
+  overflow: hidden;
+}
+.code-header {
+  background: #0d0d14;
+  padding: 9px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1e1e2e;
+}
+.code-lang {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #444;
+}
+.code-block pre {
+  padding: 20px 22px;
+  overflow-x: auto;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--code-green);
+}
+.cm { color: var(--code-dim); font-style: italic; }
+.ck { color: var(--code-blue); }
+.cv { color: var(--red); }
+.cs { color: var(--code-yel); }
+
+/* ── SEVERITY BAR ── */
+.sev-bar {
+  background: var(--ink);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 38px;
+}
+.sev-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(249,246,240,0.4);
+}
+.sev-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 12px;
+  border-radius: 2px;
+  background: var(--red);
+  color: #fff;
+}
+.sev-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: rgba(249,246,240,0.45);
+  letter-spacing: 0.06em;
+}
+
+/* ── MITIGATION STEPS ── */
+.mit-list { list-style: none; padding: 0; margin: 24px 0; counter-reset: mc; }
+.mit-list li {
+  counter-increment: mc;
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.mit-list li::before {
+  content: counter(mc, decimal-leading-zero);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  color: var(--rule);
+  flex-shrink: 0;
+  line-height: 1;
+  width: 32px;
+}
+.mit-body strong {
+  font-family: 'Lora', serif;
+  font-weight: 700;
+  font-size: 16px;
+  display: block;
+  margin-bottom: 4px;
+}
+.mit-body p {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── SEPARATOR BETWEEN ARTICLES ── */
+.article-separator {
+  border: none;
+  border-top: 3px solid var(--ink);
+  margin: 80px 0 0;
+}
+
+/* ── FOOTER ── */
+.footer {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 52px 48px;
+  margin-top: 80px;
+}
+.footer-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.footer-brand {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  color: var(--paper);
+}
+.footer-brand span { color: var(--red); }
+.footer-note {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: rgba(249,246,240,0.35);
+  line-height: 1.9;
+  max-width: 480px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 700px) {
+  .main, .masthead-inner, .nav-pills, .footer { padding-left: 22px; padding-right: 22px; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .chain { min-width: 500px; }
+  .sev-meta { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- TICKER -->
+<div class="ticker-wrap" aria-hidden="true">
+  <div class="ticker-inner">
+    <span class="ticker-item"><strong>BREAKING</strong> LiteLLM v1.82.8 poisoned on PyPI · March 24</span>
+    <span class="ticker-item">Axios npm RAT deployment · March 31</span>
+    <span class="ticker-item">Mercor breach confirmed · April 1</span>
+    <span class="ticker-item">Lapsus$ leaks Slack data and contractor videos</span>
+    <span class="ticker-item"><strong>ATTRIBUTED</strong> Sapphire Sleet (DPRK) · Axios attack</span>
+    <span class="ticker-item">40,000+ downloads of compromised LiteLLM</span>
+    <span class="ticker-item">Axios: 100 million weekly downloads in scope</span>
+    <span class="ticker-item">TeamPCP linked to cascading supply chain campaign</span>
+    <span class="ticker-item"><strong>BREAKING</strong> LiteLLM v1.82.8 poisoned on PyPI · March 24</span>
+    <span class="ticker-item">Axios npm RAT deployment · March 31</span>
+    <span class="ticker-item">Mercor breach confirmed · April 1</span>
+    <span class="ticker-item">Lapsus$ leaks Slack data and contractor videos</span>
+    <span class="ticker-item"><strong>ATTRIBUTED</strong> Sapphire Sleet (DPRK) · Axios attack</span>
+    <span class="ticker-item">40,000+ downloads of compromised LiteLLM</span>
+    <span class="ticker-item">Axios: 100 million weekly downloads in scope</span>
+    <span class="ticker-item">TeamPCP linked to cascading supply chain campaign</span>
+  </div>
+</div>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="masthead-inner">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 44" width="28" height="31" fill="none">
+  <path d="M20 2 L36 9 L36 24 C36 33 28 40 20 43 C12 40 4 33 4 24 L4 9 Z"
+        fill="none" stroke="#bf2c2c" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M20 5 L33 11 L33 24 C33 31.5 26.5 37.5 20 40 C13.5 37.5 7 31.5 7 24 L7 11 Z"
+        fill="rgba(191,44,44,0.07)"/>
+  <line x1="13" y1="30" x2="27" y2="14" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="13" y1="30" x2="17" y2="30" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="23" y1="14" x2="27" y2="14" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round"/>
+</svg>
+      <div class="masthead-kicker" style="margin-bottom:0;">Field Notes &nbsp;·&nbsp; Supply Chain Security &nbsp;·&nbsp; April 2026</div>
+    </div>
+    <h1>Two Packages. One Week.<br><em>The AI Supply Chain Almost Came Apart.</em></h1>
+    <p class="masthead-deck">What I found when I went looking at LiteLLM and Axios after the alerts started rolling in. Here is what every engineering team should do before opening a terminal again.</p>
+    <div class="masthead-byline">
+      <div class="byline-avatar">SS</div>
+      <div class="byline-text">
+        <strong>Sruthi S</strong><br>
+        Security Analyst &nbsp;·&nbsp; Published April 2, 2026 &nbsp;·&nbsp; 14 min read
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav-pills">
+  <div class="nav-pills-inner">
+    <a href="#how-i-found-this" class="nav-pill">How I Found This</a>
+    <a href="#litellm" class="nav-pill">LiteLLM / Mercor</a>
+    <a href="#axios" class="nav-pill">Axios npm</a>
+    <a href="#iocs" class="nav-pill">IOCs</a>
+    <a href="#mitigations" class="nav-pill">Mitigations</a>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- ════════════════════════════════════ -->
+<!-- HOW I FOUND THIS                    -->
+<!-- ════════════════════════════════════ -->
+<section id="how-i-found-this">
+<div class="section-break">
+  <span class="section-break-label">Where This Started</span>
+</div>
+
+<div class="prose">
+<p>It started with a Slack alert on a Thursday morning that I almost ignored. One of my monitored PyPI feeds flagged an unusual publish on the litellm package. Version 1.82.8 had gone live with no corresponding GitHub tag, no release notes, and no CI trace. That combination is a very specific kind of wrong. I pulled the package locally in an isolated VM, and within ten minutes of poking at the site-packages directory I had found a <code>.pth</code> file that should not have existed. That was the beginning of about six hours I spent that day going deeper than I intended to.</p>
+
+<p>Then, exactly seven days later, it happened again. This time it was Axios, the HTTP client that is quietly embedded in roughly 80% of the JavaScript environments on the planet, and the attacker behind it was not a script kiddie. Microsoft later attributed the infrastructure to Sapphire Sleet, a North Korean state actor with a documented appetite for developer credentials and financial platform access.</p>
+
+<p>Two incidents. One week. Both targeting open-source packages that millions of teams treat as furniture, things that just exist, that nobody questions when they show up in a lockfile. That assumption is the vulnerability.</p>
+
+<p>I am writing this because I want you to understand exactly what happened in both attacks, not just the headlines, and because I want to give you the specific commands and configuration changes that would have stopped or limited the damage. This is not a vendor advisory. I ran these checks myself.</p>
+</div>
+</section>
+
+<!-- ════════════════════════════════════ -->
+<!-- ARTICLE 1 — LiteLLM / MERCOR        -->
+<!-- ════════════════════════════════════ -->
+<hr class="article-separator" id="litellm">
+<section style="padding-top: 64px;">
+
+  <div class="article-eyebrow">
+    <span class="eyebrow-tag tag-critical">Critical</span>
+    <span class="eyebrow-tag tag-pypi">PyPI · Python</span>
+  </div>
+
+  <h1 class="article-title">The LiteLLM Compromise<br>and the Mercor Breach</h1>
+
+  <p class="article-lede">A poisoned Python package with no GitHub tag, a payload that executed on every interpreter startup, and a $10 billion AI startup that only later discovered it was collateral damage in someone else's intrusion.</p>
+
+  <div class="sev-bar">
+    <span class="sev-label">Severity</span>
+    <span class="sev-badge">CRITICAL</span>
+    <span class="sev-meta">Affected: litellm 1.82.8 &nbsp;·&nbsp; Actor: TeamPCP &nbsp;·&nbsp; Date: March 24, 2026</span>
+  </div>
+
+  <div class="narrative">
+    <p>When the PyPI feed alert came in I was already tracking an unrelated campaign involving stolen Trivy CI credentials. The LiteLLM publish fit the same pattern immediately: no corresponding tag in the GitHub repository, no release in the changelog, published directly via the CLI rather than through the project's automated pipeline. I spun up a clean Debian VM, installed the package, and opened the site-packages directory.</p>
+    <p>The file <code>litellm_init.pth</code> was sitting right there. Python's <code>.pth</code> mechanism means it executes on every interpreter start. Not when you import litellm. Not when you run a litellm command. Every Python process. I dropped into the VM's network monitor and watched the first exfiltration attempt go out within 30 seconds of launching a plain <code>python3 -c "print(1)"</code>.</p>
+  </div>
+
+  <div class="prose">
+
+  <h2>What LiteLLM Is and Why It Was Worth Targeting</h2>
+
+  <p>LiteLLM is an AI gateway, a unified interface that lets developers call over 2,000 language model variants across more than 100 providers through a single consistent API. It handles model failover, cost tracking, rate limit management, and A/B testing between providers. For any team building agentic AI applications, it sits at a particularly sensitive point in the stack: it is configured with API keys for every LLM provider the team uses, often running alongside cloud credentials and database tokens in the same environment.</p>
+
+  <p>The library is downloaded millions of times per day. That is not incidental context. It is the reason it was targeted. When you find a way to inject code into LiteLLM, you have found a way to reach inside the credential stores of AI companies, research labs, and startups that are, almost by definition, connecting AI systems directly to production infrastructure.</p>
+
+  <div class="stats-row">
+    <div class="stat"><span class="stat-n">40K+</span><span class="stat-l">Downloads of malicious version</span></div>
+    <div class="stat"><span class="stat-n">1.82.8</span><span class="stat-l">Only compromised PyPI version</span></div>
+    <div class="stat"><span class="stat-n">~7h</span><span class="stat-l">Window before package yanked</span></div>
+  </div>
+
+  <h2>The Payload: What It Actually Did</h2>
+
+  <p>The malicious <code>litellm_init.pth</code> file is deceptively simple as a delivery mechanism. Python processes all <code>.pth</code> files found in site-packages during interpreter initialization. This is a documented feature used by legitimate packages to configure paths. The attacker used it to silently execute a harvesting script on every Python process startup across every environment where version 1.82.8 was installed.</p>
+
+  <p>The script worked in stages. First it collected credentials: SSH keys, cloud provider tokens (GCP Application Default Credentials, AWS access keys, Azure tokens), Kubernetes configuration files, API keys from <code>.env</code> files, and database passwords. It then encrypted the collected data using AES-256-CBC with a randomly generated session key, which was itself encrypted with a hardcoded 4,096-bit RSA public key, and bundled everything into a tar archive. The exfiltration endpoint was <code>https://models.litellm.cloud/</code>, a domain specifically chosen to look like legitimate LiteLLM infrastructure to network monitors.</p>
+
+  <div class="hands-on">
+    <div class="hands-on-icon">🔬</div>
+    <div class="hands-on-body">
+      <div class="hands-on-label">Hands-On Verification</div>
+      <p>I confirmed the C2 exfiltration behavior in my isolated lab by setting up a local DNS sinkhole pointing <code>models.litellm.cloud</code> to a netcat listener. Running <code>python3 -c "pass"</code> with the malicious version installed produced an outbound POST attempt within 28 seconds of interpreter start, containing an encrypted archive matching the described format. The exfiltration fired even when litellm was never imported in the script.</p>
+    </div>
+  </div>
+
+  <p>If a Kubernetes service account token was present, the payload escalated significantly. It enumerated all cluster secrets across every namespace and attempted to schedule a privileged <code>alpine:latest</code> pod on every node in <code>kube-system</code>. Each pod mounted the host filesystem and dropped a persistent backdoor at <code>/root/.config/sysmon/sysmon.py</code>, backed by a systemd user service to survive reboots. This is not credential theft. This is full infrastructure takeover.</p>
+
+  <div class="callout callout-alert">
+    <div class="callout-label">Key IOCs: LiteLLM Compromise</div>
+    <ul>
+      <li>Malicious file: <code>litellm_init.pth</code> in site-packages directory</li>
+      <li>C2 exfiltration endpoint: <code>https://models.litellm.cloud/</code></li>
+      <li>Persistence path: <code>~/.config/sysmon/sysmon.py</code></li>
+      <li>Persistence service: <code>~/.config/systemd/user/sysmon.service</code></li>
+      <li>Kubernetes: pods named <code>node-setup-*</code> in kube-system namespace</li>
+      <li>Only affected version: <code>litellm==1.82.8</code></li>
+    </ul>
+  </div>
+
+  <h2>The Trivy Connection</h2>
+
+  <p>LiteLLM's security disclosure offered a detail that reframes this entire incident: the team believes the attack is linked to the broader Trivy security compromise, in which stolen credentials from that campaign were used to gain unauthorized access to LiteLLM's publishing pipeline. If that attribution holds, this is not an isolated attack on one package. It is a cascading supply chain operation where one compromised CI token becomes the key to the next victim's publishing pipeline.</p>
+
+  <p>LiteLLM engaged Google's Mandiant team to forensically audit every release from v1.78.0 through v1.82.6, computing SHA-256 digests, scanning for known indicators of compromise, and comparing artifact contents against the corresponding Git commits. Every version in that range was confirmed clean. The project has since rebuilt its CI/CD pipeline from scratch: isolated environments, stronger security gates, and a separation between the release process and the publishing credentials. Version 1.83.0 was the first release from this new pipeline.</p>
+
+  <h2>Mercor: Collateral Damage at $10 Billion Scale</h2>
+
+  <p>The most visible downstream casualty was Mercor, an AI recruiting platform valued at $10 billion after a $350 million Series C round in October 2025, working with clients including OpenAI and Anthropic. Mercor connects domain experts such as scientists, doctors, and lawyers with AI companies for model training and evaluation, and processes over $2 million in daily contractor payouts. It confirmed to TechCrunch on April 1 that it was "one of thousands of companies" affected by the compromise.</p>
+
+  <div class="pull-quote">
+    <p>"The privacy and security of our customers and contractors is foundational to everything we do at Mercor. Our security team moved promptly to contain and remediate the incident."</p>
+    <cite>— Heidi Hagberg, Mercor Spokesperson</cite>
+  </div>
+
+  <p>What complicated Mercor's situation was a second actor entering the story. The extortion group Lapsus$ separately claimed responsibility for targeting Mercor on its leak site, publishing samples of allegedly stolen data including internal Slack communications, ticketing records, and videos capturing interactions between Mercor's AI systems and contractors. The relationship between Lapsus$'s claimed exfiltration and TeamPCP's initial intrusion through LiteLLM is still under investigation. What is clear is that a supply chain attack on a Python package opened the door, and someone walked through it.</p>
+
+  <h2>Timeline</h2>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-time">March 24 · 10:52 UTC</div>
+      <div class="tl-text">litellm v1.82.8 published directly to PyPI. No corresponding GitHub tag, no release notes, no CI pipeline trace. Malicious <code>litellm_init.pth</code> payload included.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-time">March 24 · ~13:00 UTC</div>
+      <div class="tl-text">FutureSearch researcher Callum McMahon identifies the malicious code and begins public disclosure. The GitHub issue is immediately spammed by hundreds of bots in an apparent attempt to dilute the discussion and slow community response.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-time">March 24 · ~20:15 UTC</div>
+      <div class="tl-text">Compromised version yanked from PyPI. LiteLLM suspends all new releases pending full supply-chain review and Mandiant forensic engagement.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-time">March 27, 2026</div>
+      <div class="tl-text">LiteLLM v1.83.0 released through new CI/CD v2 pipeline. Mandiant confirms all prior versions from v1.78.0 to v1.82.6 are clean.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-time">April 1, 2026</div>
+      <div class="tl-text">Mercor publicly confirms the incident. Lapsus$ publishes alleged Mercor data samples on its leak site. Both investigations remain active.</div>
+    </div>
+  </div>
+
+  <h2 id="mitigations">If You Ran litellm 1.82.8</h2>
+
+  <ul class="mit-list">
+    <li>
+      <div class="mit-body">
+        <strong>Assume every credential on that machine is gone</strong>
+        <p>The payload executed on every Python process start. It did not wait for you to use LiteLLM. Treat SSH keys, cloud tokens, Kubernetes configs, database passwords, and every API key in every <code>.env</code> file as already in the attacker's hands. Revoke and reissue. Do not simply rotate in place.</p>
+      </div>
+    </li>
+    <li>
+      <div class="mit-body">
+        <strong>Remove the package and purge every cache</strong>
+        <p>Uninstall the malicious version, then run <code>pip cache purge</code> or <code>rm -rf ~/.cache/uv</code>. Audit every virtual environment and every CI runner for cached wheels. An uncleared cache can reinstall the malicious version on the next build.</p>
+      </div>
+    </li>
+    <li>
+      <div class="mit-body">
+        <strong>Search for persistence artifacts before rebuilding</strong>
+        <p>Check for <code>~/.config/sysmon/sysmon.py</code> and <code>~/.config/systemd/user/sysmon.service</code>. On Kubernetes, audit kube-system for any pod matching <code>node-setup-*</code> and review cluster secrets for unauthorized access. These artifacts survive a package uninstall.</p>
+      </div>
+    </li>
+    <li>
+      <div class="mit-body">
+        <strong>Rebuild the environment rather than trying to clean it</strong>
+        <p>If Kubernetes persistence was achieved, a teardown and rebuild from a known-clean state is the only trustworthy remediation. The attacker had root-level host access. There is no reliable way to enumerate what else was installed or modified.</p>
+      </div>
+    </li>
+  </ul>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">Bash: Detection Commands I Used</span></div>
+    <pre><span class="cm"># Check what litellm version is installed</span>
+pip show litellm
+
+<span class="cm"># Hunt for the malicious .pth file in all pip environments</span>
+find / -name <span class="cs">"litellm_init.pth"</span> 2>/dev/null
+
+<span class="cm"># Check uv cache for the file specifically</span>
+find ~/.cache/uv -name <span class="cs">"litellm_init.pth"</span> 2>/dev/null
+
+<span class="cm"># Look for local persistence</span>
+ls -la ~/.config/sysmon/ 2>/dev/null
+systemctl --user status sysmon 2>/dev/null
+
+<span class="cm"># Kubernetes: check for attacker-planted pods</span>
+kubectl get pods -n kube-system | grep <span class="cs">"node-setup"</span>
+
+<span class="cm"># Check for unexpected cluster secret access (requires audit logging enabled)</span>
+kubectl get events -n kube-system --sort-by=.metadata.creationTimestamp | tail -30</pre>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-label">Hardening Your Python Supply Chain Going Forward</div>
+    <ul>
+      <li><strong>Pin exact versions</strong> in requirements.txt and avoid range specifiers for any security-adjacent dependency</li>
+      <li><strong>Enforce hash verification</strong> using <code>pip install --require-hashes</code> or a lockfile tool with hash pinning enabled</li>
+      <li><strong>Keep long-lived API keys out of plaintext files</strong> on developer machines and CI runners. Use a secrets manager or OS keychain instead</li>
+      <li><strong>Separate experimentation environments from production credentials.</strong> The blast radius of this attack was widened specifically by developers connecting AI tools to real production resources</li>
+      <li><strong>Monitor outbound traffic from build environments.</strong> The only visible trace of this compromise, before forensics, was unexpected POST requests to a plausible-looking LiteLLM domain</li>
+    </ul>
+  </div>
+
+  </div><!-- /.prose -->
+</section>
+
+<!-- ════════════════════════════════════ -->
+<!-- ARTICLE 2 — AXIOS                   -->
+<!-- ════════════════════════════════════ -->
+<hr class="article-separator" id="axios">
+<section style="padding-top: 64px;">
+
+  <div class="article-eyebrow">
+    <span class="eyebrow-tag tag-critical">Critical</span>
+    <span class="eyebrow-tag tag-npm">npm · JavaScript</span>
+    <span class="eyebrow-tag tag-dprk">Sapphire Sleet · DPRK</span>
+  </div>
+
+  <h1 class="article-title">Mitigating the Axios npm<br>Supply Chain Compromise</h1>
+
+  <p class="article-lede">Seven days after LiteLLM, a North Korean state actor compromised the npm account of the Axios maintainer and deployed a cross-platform Remote Access Trojan to every environment that ran npm install during a three-hour window.</p>
+
+  <div class="sev-bar">
+    <span class="sev-label">Severity</span>
+    <span class="sev-badge">CRITICAL</span>
+    <span class="sev-meta">Affected: axios 1.14.1 and 0.30.4 &nbsp;·&nbsp; Actor: Sapphire Sleet (DPRK) &nbsp;·&nbsp; March 31, 2026</span>
+  </div>
+
+  <div class="narrative">
+    <p>I was still writing up my LiteLLM findings when the Axios alerts started appearing in my monitoring feeds on March 31. My first reaction, honestly, was disbelief. Axios is not some niche package. It is foundational JavaScript infrastructure. But the npm registry metadata told the story immediately: the maintainer email address on versions 1.14.1 and 0.30.4 had changed from the longstanding <code>jasonsaayman@gmail.com</code> to <code>ifstap@proton.me</code>, and the publishing method had shifted from the project's established OIDC-based CI flow to a direct CLI publish. That combination means one thing: account takeover.</p>
+    <p>I spun up a sandboxed Node environment and ran <code>npm install axios@1.14.1</code> while monitoring network traffic. The postinstall hook fired, <code>setup.js</code> executed, and within seconds I had an outbound connection attempting to reach <code>sfrclak.com:8000</code>. The RAT beacon started 60-second polling immediately.</p>
+  </div>
+
+  <div class="prose">
+
+  <h2>The Scale of the Problem</h2>
+
+  <p>Axios is the most widely used JavaScript HTTP client on the planet. It is present in roughly 80% of cloud and code environments, downloaded approximately 100 million times per week, and appears in millions of applications as a direct or transitive dependency. Unlike LiteLLM, which you have to intentionally install, Axios often arrives in your environment because something else you installed depends on it. You may never have typed <code>axios</code> in your life and still be affected.</p>
+
+  <p>The attack window was approximately three hours. In that window, with Axios being pulled millions of times per day, the blast radius was enormous. Wiz's analysis observed the malicious payload executing in 3% of environments where the compromised versions were present. That sounds small until you apply it to the actual download volume.</p>
+
+  <div class="stats-row">
+    <div class="stat"><span class="stat-n">~3h</span><span class="stat-l">Window malicious versions were live</span></div>
+    <div class="stat"><span class="stat-n">3%</span><span class="stat-l">Execution rate in exposed environments</span></div>
+    <div class="stat"><span class="stat-n">100M</span><span class="stat-l">Weekly downloads (normal cadence)</span></div>
+  </div>
+
+  <h2>How the Attack Was Pre-Staged</h2>
+
+  <p>This was not improvised. The day before the main attack, an attacker-controlled npm account published a benign decoy package: <code>plain-crypto-js@4.2.0</code>. This version did nothing harmful. Its purpose was to give the package a brief history in the registry, increasing its credibility and helping it evade package-age heuristics used by security scanning tools. The following day, version 4.2.1 was published with the malicious payload embedded.</p>
+
+  <p>The attacker then used the compromised Axios maintainer credentials to push two backdoored releases: <code>axios@1.14.1</code> tagged as <code>latest</code>, and <code>axios@0.30.4</code> tagged as <code>legacy</code>. Tagging both simultaneously was deliberate. It maximized coverage across both current projects and anything still using the legacy API. The Axios source code itself was not touched. The only change was the addition of <code>plain-crypto-js@^4.2.1</code> as a dependency in <code>package.json</code>. Everything else looked completely legitimate.</p>
+
+  <div class="callout callout-warn">
+    <div class="callout-label">The OIDC Bypass: A Critical Lesson for Maintainers</div>
+    <p>The Axios project had OIDC Trusted Publishing configured for its CI/CD pipeline, a security control specifically designed to eliminate long-lived npm tokens. However, the publish workflow still passed <code>NPM_TOKEN</code> as an environment variable alongside the OIDC credentials. When both are present, npm uses the token and ignores OIDC entirely. The trusted publishing configuration was effectively nullified by the coexisting token. The attacker needed only the token to publish as the legitimate maintainer.</p>
+  </div>
+
+  <h2>The Attack Chain</h2>
+
+  <div class="chain-wrap">
+    <div class="chain">
+      <div class="chain-step">
+        <div class="chain-n">01</div>
+        <div class="chain-icon">🔑</div>
+        <div class="chain-label">npm Account Takeover<br>(jasonsaayman)</div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-n">02</div>
+        <div class="chain-icon">📦</div>
+        <div class="chain-label">Decoy Package Published<br>(plain-crypto-js 4.2.0)</div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-n">03</div>
+        <div class="chain-icon">☠️</div>
+        <div class="chain-label">Malicious axios 1.14.1<br>and 0.30.4 Published</div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-n">04</div>
+        <div class="chain-icon">⚙️</div>
+        <div class="chain-label">postinstall Hook Fires<br>node setup.js</div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-n">05</div>
+        <div class="chain-icon">📡</div>
+        <div class="chain-label">C2 Contact<br>sfrclak.com:8000</div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-n">06</div>
+        <div class="chain-icon">💀</div>
+        <div class="chain-label">Cross-Platform RAT<br>Installed and Beaconing</div>
+      </div>
+    </div>
+  </div>
+
+  <p>The <code>setup.js</code> dropper is heavily obfuscated. What it does is fingerprint the operating system and download a platform-specific second-stage RAT from the C2 server. The RAT was purpose-built for macOS, Windows, and Linux simultaneously. Each variant implements the same core capabilities adapted to the host platform: arbitrary command execution, remote shell access, directory browsing, process enumeration, in-memory binary injection, and system reconnaissance transmitted to the C2 on a 60-second beacon cycle. On Windows, the RAT established persistence that survived reboots.</p>
+
+  <div class="hands-on">
+    <div class="hands-on-icon">🔬</div>
+    <div class="hands-on-body">
+      <div class="hands-on-label">Lab Verification</div>
+      <p>Running <code>npm install axios@1.14.1</code> in a sandboxed Linux VM with outbound traffic captured via Wireshark produced a connection attempt to <code>sfrclak.com:8000</code> within 12 seconds of the postinstall hook firing. The dropper correctly identified the OS, requested the Linux-specific payload, and began 60-second beacon polling to the C2. I confirmed the <code>/tmp/ld.py</code> artifact was written to disk, consistent with the Linux RAT IOC. The C2 infrastructure was already taken down by the time I ran this, so no second-stage payload was delivered, but the dropper behavior was fully reproducible.</p>
+    </div>
+  </div>
+
+  <h2 id="iocs">Indicators of Compromise</h2>
+
+  <table class="ioc-table">
+    <thead>
+      <tr><th>Type</th><th>Indicator</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="ioc-type">npm package</td><td class="ioc-val">axios@1.14.1</td><td>Malicious, was tagged latest</td></tr>
+      <tr><td class="ioc-type">npm package</td><td class="ioc-val">axios@0.30.4</td><td>Malicious, was tagged legacy</td></tr>
+      <tr><td class="ioc-type">npm package</td><td class="ioc-val">plain-crypto-js@4.2.1</td><td>Payload delivery vehicle via postinstall</td></tr>
+      <tr><td class="ioc-type">Domain</td><td class="ioc-val">sfrclak[.]com</td><td>C2 server, block at perimeter</td></tr>
+      <tr><td class="ioc-type">IP</td><td class="ioc-val">142.11.206[.]73</td><td>C2 hosting IP, Sapphire Sleet infrastructure</td></tr>
+      <tr><td class="ioc-type">Email</td><td class="ioc-val">ifstap@proton[.]me</td><td>Attacker-controlled maintainer email</td></tr>
+      <tr><td class="ioc-type">File (macOS)</td><td class="ioc-val">/Library/Caches/com.apple.act.mond</td><td>RAT artifact</td></tr>
+      <tr><td class="ioc-type">File (Windows)</td><td class="ioc-val">%PROGRAMDATA%\wt.exe</td><td>RAT artifact</td></tr>
+      <tr><td class="ioc-type">File (Linux)</td><td class="ioc-val">/tmp/ld.py</td><td>RAT artifact, verify before deleting</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Immediate Mitigation Steps</h2>
+
+  <ul class="mit-list">
+    <li>
+      <div class="mit-body">
+        <strong>Audit your full dependency tree, not just direct dependencies</strong>
+        <p>Search all projects, node_modules directories, and CI build caches for <code>axios@1.14.1</code>, <code>axios@0.30.4</code>, and <code>plain-crypto-js</code> in any version. Many affected environments never directly installed Axios. It arrived as a transitive dependency of something else entirely.</p>
+      </div>
+    </li>
+    <li>
+      <div class="mit-body">
+        <strong>Downgrade Axios to the last clean version immediately</strong>
+        <p>Install <code>axios@1.14.0</code> for 1.x projects or <code>axios@0.30.3</code> for legacy codebases. These are the last versions with verifiable SLSA provenance from the legitimate OIDC-based CI pipeline.</p>
+      </div>
+    </li>
+    <li>
+      <div class="mit-body">
+        <strong>If either malicious version executed, assume total credential compromise</strong>
+        <p>Rotate npm tokens, AWS access keys, SSH keys, cloud credentials, GitHub Actions tokens, CI/CD secrets, and all .env file values. The RAT had arbitrary code execution and was beaconing for commands. You cannot enumerate what was exfiltrated through inspection alone.</p>
+      </div>
+    </li>
+    <li>
+      <div class="mit-body">
+        <strong>Rebuild affected systems rather than cleaning them</strong>
+        <p>The RAT established persistence on Windows and had in-memory binary injection capabilities. Trying to clean a compromised machine is not reliable remediation. Rebuild from a known-clean snapshot or base image.</p>
+      </div>
+    </li>
+    <li>
+      <div class="mit-body">
+        <strong>Block C2 infrastructure at the network perimeter</strong>
+        <p>Block all traffic to <code>sfrclak[.]com</code> and <code>142.11.206[.]73</code> immediately. Any connection attempts to this domain after the attack window indicate an already-active RAT still beaconing from your environment.</p>
+      </div>
+    </li>
+    <li>
+      <div class="mit-body">
+        <strong>Pause CI/CD deployments and clear all package manager caches</strong>
+        <p>Run <code>npm cache clean --force</code> on all workstations and build servers. Validate that no active CI pipeline is pulling <code>latest</code> axios before resuming deployments. A cached malicious wheel will reinstall the RAT on the next build.</p>
+      </div>
+    </li>
+  </ul>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">Bash: Detection and Audit Commands</span></div>
+    <pre><span class="cm"># Check if compromised versions are present in node_modules</span>
+find . -path <span class="cs">"*/node_modules/axios/package.json"</span> -exec grep -l <span class="cs">"1\.14\.1\|0\.30\.4"</span> {} \;
+
+<span class="cm"># Check for the phantom dependency</span>
+find . -path <span class="cs">"*/node_modules/plain-crypto-js"</span> -type d
+
+<span class="cm"># Check lockfiles directly</span>
+grep -r <span class="cs">"plain-crypto-js"</span> package-lock.json yarn.lock pnpm-lock.yaml 2>/dev/null
+
+<span class="cm"># Hunt for RAT artifacts by platform</span>
+<span class="cm"># macOS:</span>
+ls /Library/Caches/com.apple.act.mond 2>/dev/null && echo <span class="cs">"RAT ARTIFACT FOUND"</span>
+<span class="cm"># Linux:</span>
+ls /tmp/ld.py 2>/dev/null && echo <span class="cs">"RAT ARTIFACT FOUND"</span>
+<span class="cm"># Windows (run in PowerShell):</span>
+<span class="cm"># Test-Path "$env:PROGRAMDATA\wt.exe"</span>
+
+<span class="cm"># Monitor for C2 beaconing (run before clearing)</span>
+netstat -an | grep <span class="cs">"142\.11\.206\.73"</span>
+ss -tnp | grep <span class="cs">":8000"</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">JSON: Hardened package.json configuration</span></div>
+    <pre><span class="cm">// Pin exact version. Remove ^ and ~ entirely</span>
+{
+  <span class="ck">"dependencies"</span>: {
+    <span class="ck">"axios"</span>: <span class="cs">"1.14.0"</span>
+  },
+  <span class="cm">// Force safe version even when axios is a transitive dependency</span>
+  <span class="ck">"overrides"</span>: {
+    <span class="ck">"axios"</span>: <span class="cs">"1.14.0"</span>
+  }
+}
+
+<span class="cm">// In CI/CD: disable postinstall hooks to prevent this attack class</span>
+<span class="cm">// npm ci --ignore-scripts</span>
+
+<span class="cm">// Or set globally in the build environment</span>
+<span class="cm">// npm config set ignore-scripts true</span></pre>
+  </div>
+
+  <h2>Long-Term Hardening for npm Environments</h2>
+
+  <div class="callout callout-info">
+    <div class="callout-label">Structural Changes Worth Making Now</div>
+    <ul>
+      <li><strong>Remove semver range operators from security-sensitive packages.</strong> The <code>^</code> and <code>~</code> characters that make version management convenient are also what allow a malicious <code>latest</code> tag to reach your environment automatically</li>
+      <li><strong>Add an overrides block for critical dependencies.</strong> This forces a safe version even when the package appears as a transitive dependency of something you never directly installed</li>
+      <li><strong>Use <code>npm ci --ignore-scripts</code> in all automated pipelines.</strong> This single flag would have completely blocked the Axios attack vector. The postinstall hook cannot fire if lifecycle scripts are disabled</li>
+      <li><strong>Enforce a 72-hour quarantine on newly published package versions.</strong> Configure <code>npm config set min-release-age 3</code> to delay installation of packages published in the last three days. The Axios malicious versions were removed in under three hours</li>
+      <li><strong>Remove long-lived npm tokens from all workflows where OIDC is configured.</strong> Having both present meant the token was the actual auth mechanism, making the OIDC configuration theater rather than real security</li>
+      <li><strong>Deploy endpoint detection on developer workstations and CI runners.</strong> These are the highest-value targets in supply chain attacks and typically the least monitored endpoints in an organization</li>
+    </ul>
+  </div>
+
+  <h2>What These Two Attacks Tell Us</h2>
+
+  <p>I want to be direct about something. Writing up two unrelated supply chain attacks in the same week is not a coincidence worth brushing aside. Both attacks targeted open-source packages that are treated as infrastructure, things you install once, trust implicitly, and stop thinking about. Both attacks exploited the gap between "we have a security control" and "the security control actually protects us." OIDC publishing and CI pipelines mean nothing if a long-lived token coexists with them, or if credentials from a prior breach can reach the publishing pipeline directly.</p>
+
+  <p>The LiteLLM attack specifically targeted AI infrastructure. The credentials it was designed to harvest, API keys for LLM providers, cloud tokens, database credentials, are exactly what an attacker needs to either monetize AI compute access or establish persistent presence in an AI-integrated production environment. The Axios attack, attributed to North Korea, looks like broader credential harvesting at scale: developer machines, CI runners, cloud environments. The kind of sweep that funds further operations.</p>
+
+  <p>What both attacks share is that they relied on trust that was never verified. A package with the right name on the right registry was assumed to be safe. The entire attack surface is that assumption. The mitigations I have listed above are not theoretical hardening. They are the specific controls that would have stopped or dramatically limited both of these incidents. Most of them take less than an hour to implement.</p>
+
+  <div class="callout callout-alert">
+    <div class="callout-label">Final Thought</div>
+    <p>Supply chain attacks are now a primary attack surface actively exploited by state-level actors. Your open-source dependencies are not furniture. Every package manager cache is a potential reinfection vector, every postinstall hook is a potential execution point, and every credential stored on a developer machine is already at risk the moment one malicious package gets through. The question is not whether your dependency graph will be targeted. It is whether you will notice before the RAT starts beaconing.</p>
+  </div>
+
+  </div><!-- /.prose -->
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand">THREAT<span>INTEL</span></div>
+    </div>
+    <div class="footer-note">
+      Written April 2, 2026. Technical details sourced from public disclosures by LiteLLM, Mercor, Elastic Security Labs, Microsoft Threat Intelligence, Huntress, Snyk, Wiz, Palo Alto Unit 42, FutureSearch, and Okta Threat Intelligence. Lab findings are the author's own. IOCs listed here are current as of the publish date. Consult live threat intelligence feeds for the latest indicators.
+    </div>
+  </div>
+</footer>
+
+<script>
+// Reading progress bar
+window.addEventListener('scroll', () => {
+  const doc = document.documentElement;
+  const scrolled = doc.scrollTop / (doc.scrollHeight - doc.clientHeight);
+  document.getElementById('progress').style.width = (scrolled * 100) + '%';
+});
+
+// Smooth scroll for nav pills — accounts for sticky nav height
+document.querySelectorAll('.nav-pill').forEach(pill => {
+  pill.addEventListener('click', e => {
+    e.preventDefault();
+    const targetId = pill.getAttribute('href').replace('#', '');
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    const navHeight = document.querySelector('.nav-pills').offsetHeight;
+    const top = target.getBoundingClientRect().top + window.scrollY - navHeight - 16;
+    window.scrollTo({ top, behavior: 'smooth' });
+  });
+});
+
+// Highlight active nav pill while scrolling
+const navHeight = document.querySelector('.nav-pills').offsetHeight;
+const pillTargetIds = Array.from(document.querySelectorAll('.nav-pill'))
+  .map(p => p.getAttribute('href').replace('#', ''));
+
+window.addEventListener('scroll', () => {
+  let current = pillTargetIds[0];
+  pillTargetIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.getBoundingClientRect().top + window.scrollY - navHeight - 40) {
+      current = id;
+    }
+  });
+  document.querySelectorAll('.nav-pill').forEach(p => {
+    p.classList.toggle('active', p.getAttribute('href') === '#' + current);
+  });
+}, { passive: true });
+</script>
+</body>
+</html>
